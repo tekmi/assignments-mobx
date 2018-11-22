@@ -11,26 +11,26 @@ import UserDelete from "./containers/Admin/User/UserDelete";
 
 class App extends Component {
     componentDidMount() {
-        this.props.authStateContainer.setAuthRedirectPath(this.props.location.pathname || '/');
-        this.props.authStateContainer.authCheckState();
+        this.props.authContext.setAuthRedirectPath(this.props.location.pathname || '/');
+        this.props.authContext.authCheckState();
     }
 
     render() {
         let routes = (
             <Switch>
-                <Route path="/login" render={props => <Login {...props} authStateContainer={this.props.authStateContainer} />}/>
-                <Route path="/register" render={props => <Register {...props} authStateContainer={this.props.authStateContainer} />}/>
+                <Route path="/login" render={props => <Login {...props} authStateContainer={this.props.authContext} />}/>
+                <Route path="/register" render={props => <Register {...props} authStateContainer={this.props.authContext} />}/>
                 <Redirect to="/login"/>
             </Switch>
         );
 
-        if (this.props.authStateContainer.state.token !== null) {
+        if (this.props.authContext.state.token !== null) {
             routes = (
                 <Switch>
-                    <Route path="/logout" render={props => <Logout {...props} authStateContainer={this.props.authStateContainer} />}/>
-                    <Route path="/login" render={props => <Login {...props} authStateContainer={this.props.authStateContainer} />}/>
+                    <Route path="/logout" render={props => <Logout {...props} authStateContainer={this.props.authContext} />}/>
+                    <Route path="/login" render={props => <Login {...props} authStateContainer={this.props.authContext} />}/>
                     <Route path="/user-delete" component={UserDelete} />
-                    <Route path="/user" render={props => <User {...props} authStateContainer={this.props.authStateContainer} userStateContainer={this.props.userStateContainer} />}/>
+                    <Route path="/user" render={props => <User {...props} authStateContainer={this.props.authContext} userStateContainer={this.props.userContext} />}/>
                     <Route path="/" exact component={Dashboard} />
                     <Redirect to="/" />
                 </Switch>

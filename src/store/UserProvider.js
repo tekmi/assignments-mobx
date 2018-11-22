@@ -1,11 +1,28 @@
-import {Container} from 'unstated';
+import React, {Component} from "react";
 import axios from './../helpers/axios';
 
-class UserContainer extends Container {
+const MyUserContext = React.createContext();
+
+export const UserConsumer = MyUserContext.Consumer;
+export class UserProvider extends Component {
     state = {
         loading: false,
         user_details: null
     };
+
+    render() {
+        return (
+            <MyUserContext.Provider value={{
+                state: this.state,
+                userGet: this.userGet,
+                userDelete: this.userDelete,
+                userUpdate: this.userUpdate
+            }}>
+                {this.props.children}
+            </MyUserContext.Provider>
+        )
+    }
+
 
     userGet = (token, userId) => {
         this.setState({
@@ -120,6 +137,4 @@ class UserContainer extends Container {
             });
     };
 }
-
-export default UserContainer;
 

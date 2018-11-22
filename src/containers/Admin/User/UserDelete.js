@@ -3,9 +3,8 @@ import Toolbar from "../../../components/Navigation/Toolbar/Toolbar";
 import axios from './../../../helpers/axios';
 import withErrorHandler from "../../../hoc/withErrorHandler";
 
-import {Subscribe} from 'unstated';
-import AuthStateContainer from './../../../store/AuthContainer';
-import UserStateContainer from './../../../store/UserContainer';
+import {AuthConsumer} from './../../../store/AuthProvider';
+import {UserConsumer} from './../../../store/UserProvider';
 
 class UserDelete extends Component {
     constructor(props) {
@@ -27,18 +26,20 @@ class UserDelete extends Component {
 
     render() {
         return (
-            <Subscribe to={[AuthStateContainer, UserStateContainer]}>
-                {
-                    (authStateContainer, userStateContainer) => (
-                        <div>
-                            <Toolbar/>
-                            <h3>Deleting user: <i>{authStateContainer.state.user.email}</i></h3>
-                            <br/><br/>
-                            <button type="submit" className="btn btn-danger" onClick={(event) => this.inputChangedHandler(event, authStateContainer, userStateContainer)}>Delete my account right now and log me out </button>
-                        </div>
-                    )
-                }
-            </Subscribe>
+            <AuthConsumer>
+                {authContext => (
+                    <UserConsumer>
+                        {userContext => (
+                            <div>
+                                <Toolbar/>
+                                <h3>Deleting user: <i>{authContext.state.user.email}</i></h3>
+                                <br/><br/>
+                                <button type="submit" className="btn btn-danger" onClick={(event) => this.inputChangedHandler(event, authContext, userContext)}>Delete my account right now and log me out </button>
+                            </div>
+                        )}
+                    </UserConsumer>
+                )}
+            </AuthConsumer>
         );
     }
 }

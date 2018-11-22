@@ -1,23 +1,21 @@
 import React, {Component} from 'react';
 import Toolbar from "../../../components/Navigation/Toolbar/Toolbar";
 
-import {Subscribe} from 'unstated';
-import AuthStateContainer from './../../../store/AuthContainer';
+import {AuthConsumer} from './../../../store/AuthProvider';
 
 class Dashboard extends Component {
     render() {
         return (
-            <Subscribe to={[AuthStateContainer]}>
-                {
-                    authStateContainer => (
+            <AuthConsumer>
+                { authContext => (
                         <div>
-                            <Toolbar />
+                            <Toolbar/>
                             <h1>Dashboard</h1>
-                            <h3>Hi {authStateContainer.state.user.email}</h3>
+                            <h3>Hi {authContext.state.user.email}</h3>
                         </div>
                     )
                 }
-            </Subscribe>
+            </AuthConsumer>
         );
     }
 }

@@ -1,8 +1,11 @@
-import {Container} from 'unstated';
+import React, {Component} from "react";
 import axios from './../helpers/axios';
 import jwt_decode from 'jwt-decode';
 
-class AuthContainer extends Container {
+const MyContext = React.createContext();
+
+export const AuthConsumer = MyContext.Consumer;
+export class AuthProvider extends Component {
     state = {
         token: null,
         user: null,
@@ -12,6 +15,22 @@ class AuthContainer extends Container {
         loading: false,
         authRedirectPath: '/'
     };
+
+    render() {
+        return (
+            <MyContext.Provider value={{
+                state: this.state,
+                setAuthRedirectPath: this.setAuthRedirectPath,
+                authLogout: this.authLogout,
+                authCheckState: this.authCheckState,
+                auth: this.auth,
+                register: this.register,
+                registerCleanup: this.registerCleanup
+            }}>
+                {this.props.children}
+            </MyContext.Provider>
+        )
+    }
 
     setAuthRedirectPath = (path) => {
         this.setState({
@@ -147,6 +166,3 @@ class AuthContainer extends Container {
         });
     };
 }
-
-export default AuthContainer;
-
