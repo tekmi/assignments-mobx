@@ -5,8 +5,10 @@ import axios from './../../../helpers/axios';
 import withErrorHandler from "../../../hoc/withErrorHandler";
 import Spinner from "../../../components/UI/Spinner/Spinner";
 import {NavLink, Redirect} from "react-router-dom";
+import {inject, observer} from "mobx-react";
 
-class Register extends Component {
+// You can wrap the React class in observer like that. You could also use the Javascript Extension @observer, if you install certain libraries.
+const Register = observer(class Register extends Component {
     constructor(props) {
         super(props);
 
@@ -37,7 +39,7 @@ class Register extends Component {
             return result;
         }, {});
 
-        this.props.authStateContainer.register(data);
+        this.props.authState.register(data);
     };
 
     inputChangedHandler = (event) => {
@@ -53,13 +55,13 @@ class Register extends Component {
     };
 
     render() {
-        const redirectAfterSuccessfulRegistration = this.props.authStateContainer.state.registered_email ? <Redirect to="/login"/> : null;
+        const redirectAfterSuccessfulRegistration = this.props.authState.registered_email ? <Redirect to="/login"/> : null;
         if (redirectAfterSuccessfulRegistration) {
-            this.props.authStateContainer.registerCleanup(this.props.authStateContainer.state.registered_email);
+            this.props.authState.registerCleanup(this.props.authState.registered_email);
         }
 
         let registration = <Spinner/>;
-        if (!this.props.authStateContainer.state.loading) {
+        if (!this.props.authState.loading) {
             registration = (
                 <form method="post" noValidate onSubmit={(event) => this.submitHandler(event)}>
                     <div className={this.state.email.touched ? 'form-group was-validated' : 'form-group'}>
@@ -189,6 +191,6 @@ class Register extends Component {
             </div>
         );
     }
-}
+});
 
-export default withErrorHandler(Register, axios);
+export default inject("authState")(withErrorHandler(Register, axios));

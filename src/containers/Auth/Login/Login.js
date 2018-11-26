@@ -5,7 +5,9 @@ import Spinner from "../../../components/UI/Spinner/Spinner";
 import axios from './../../../helpers/axios';
 import withErrorHandler from "../../../hoc/withErrorHandler";
 
-class Login extends Component {
+import { observer, inject } from "mobx-react";
+
+const Login = observer(class Login extends Component {
     constructor(props) {
         super(props);
 
@@ -35,19 +37,18 @@ class Login extends Component {
             return;
         }
 
-        this.props.authStateContainer.auth(this.state.email.value, this.state.password.value);
+        this.props.authState.auth(this.state.email.value, this.state.password.value);
     };
 
     render() {
-        // BUU: looks like Subscribing to state is not suitable here, only in the return() further down
         let authRedirect = null;
-        if (this.props.authStateContainer.state.token) {
-            const redirectTo = this.props.authStateContainer.state.authRedirectPath && this.props.authStateContainer.state.authRedirectPath !== "/login" ? this.props.authStateContainer.state.authRedirectPath : "/";
+        if (this.props.authState.token) {
+            const redirectTo = this.props.authState.authRedirectPath && this.props.authState.authRedirectPath !== "/login" ? this.props.authState.authRedirectPath : "/";
             authRedirect = <Redirect to={redirectTo}/>;
         }
 
         let login = <Spinner/>;
-        if (!this.props.authStateContainer.state.loading) {
+        if (!this.props.authState.loading) {
             login = (
                 <form method="post" noValidate onSubmit={(event) => this.submitHandler(event)}>
                     <div className={this.state.email.touched ? 'form-group was-validated' : 'form-group'}>
@@ -88,7 +89,7 @@ class Login extends Component {
             </div>
         );
     }
-}
+});
 
-export default withErrorHandler(Login, axios);
+export default inject("authState")(withErrorHandler(Login, axios));
 

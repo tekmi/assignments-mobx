@@ -1,9 +1,10 @@
 import React, {Component} from 'react';
 import {Redirect} from 'react-router-dom';
+import {inject} from "mobx-react";
 
 class Logout extends Component {
     componentDidMount() {
-        this.props.authStateContainer.authLogout();
+        this.props.authState.authLogout();
     }
 
     render() {
@@ -11,4 +12,4 @@ class Logout extends Component {
     }
 }
 
-export default Logout;
+export default inject("authState")(Logout);

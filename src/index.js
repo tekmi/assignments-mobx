@@ -1,29 +1,33 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import {BrowserRouter} from 'react-router-dom';
-import {AuthProvider, AuthConsumer} from './store/AuthProvider';
-import {UserProvider, UserConsumer} from './store/UserProvider';
 
+import {authState} from "./store/observables/AuthObservable";
+import {userState} from "./store/observables/UserObservable";
+import {themeState} from "./store/observables/ThemeObservable";
+
+import {Provider} from 'mobx-react';
+import {intercept} from 'mobx';
 import App from './App';
 
+intercept(themeState, 'theme', change => {
+    if (!change.newValue) {
+        return null;
+    }
+
+    if (!themeState.allowedThemes().includes(change.newValue)) {
+        change.newValue = 'default';
+    }
+
+    return change;
+});
+
 const app = (
-    <AuthProvider>
-        <UserProvider>
-            <BrowserRouter>
-                <AuthConsumer>
-                    { authContext => (
-                            <UserConsumer>
-                                { userContext => (
-                                        <App authContext={authContext} userContext={userContext}/>
-                                    )
-                                }
-                            </UserConsumer>
-                        )
-                    }
-                </AuthConsumer>
-            </BrowserRouter>
-        </UserProvider>
-    </AuthProvider>
+    <Provider authState={authState} userState={userState} themeState={themeState}>
+        <BrowserRouter>
+            <App />
+        </BrowserRouter>
+    </Provider>
 );
 
 ReactDOM.render(app, document.getElementById('root'));

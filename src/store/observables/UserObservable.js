@@ -1,33 +1,23 @@
-import React, {Component} from "react";
-import axios from './../helpers/axios';
+import {action, observable, runInAction} from 'mobx';
+import axios from './../../helpers/axios';
+import {authState} from './AuthObservable';
 
-const MyUserContext = React.createContext();
+// Note that we have deliberately avoided the use of arrow-functions to define the action.
+// This is because arrow-functions capture the lexical this at the time the action is defined.
+// However, the observable() API returns a new object, which is of course different from the lexical this that is captured in the action() call.
+// This means, the this that you are mutating would not be the object that is returned from observable().
 
-export const UserConsumer = MyUserContext.Consumer;
-export class UserProvider extends Component {
-    state = {
-        loading: false,
-        user_details: null
-    };
+export const userState = observable({
+    loading: false,
+    user_details: null,
 
-    render() {
-        return (
-            <MyUserContext.Provider value={{
-                state: this.state,
-                userGet: this.userGet,
-                userDelete: this.userDelete,
-                userUpdate: this.userUpdate
-            }}>
-                {this.props.children}
-            </MyUserContext.Provider>
-        )
-    }
+    get userDetails() {
+        return this.user_details;
+    },
 
-
-    userGet = (token, userId) => {
-        this.setState({
-            loading: true
-        });
+    // TODO: called directly from User component...problems were with componentWillReceiveProps
+    userGet: action(function (token, userId) {
+        this.loading = true;
 
         const config = {
             "headers": {
@@ -50,23 +40,21 @@ export class UserProvider extends Component {
                     billingAddressUri: response.data.addresses[0]['@id']
                 };
 
-                this.setState({
-                    loading: false,
-                    user_details: userDetails
+                runInAction(() => {
+                    this.loading = false;
+                    this.user_details = userDetails;
                 });
             })
             .catch(err => {
-                this.setState({
-                    loading: false,
-                    user_details: null
+                runInAction(() => {
+                    this.loading = false;
+                    this.user_details = null;
                 });
             });
-    };
+    }),
 
-    userUpdate = (token, userId, userDetails) => {
-        this.setState({
-            loading: true
-        });
+    userUpdate: action(function (token, userId, userDetails) {
+        this.loading = true;
 
         let data = {
             "name": userDetails.name,
@@ -103,20 +91,20 @@ export class UserProvider extends Component {
                     billingAddressUri: response.data.addresses[0]['@id']
                 };
 
-                this.setState({
-                    loading: false,
-                    user_details: userDetails
+                runInAction(() => {
+                    this.loading = false;
+                    this.user_details = userDetails;
                 });
             })
             .catch(err => {
-                this.setState({
-                    loading: false,
-                    user_details: null
+                runInAction(() => {
+                    this.loading = false;
+                    this.user_details = null;
                 });
             });
-    };
+    }),
 
-    userDelete = (token, userId, logoutFunc) => {
+    userDelete: action(function(token, userId) {
         const config = {
             "headers": {
                 'Accept': 'application/ld+json',
@@ -125,16 +113,15 @@ export class UserProvider extends Component {
             }
         };
 
+
         axios.delete(`/users/${userId}`, config)
             .then(response => {
-                // BUU: Not possible to easy call other state containers like below
-                // let authContainer = new AuthContainer();
-                // authContainer.authLogout();
-
-                logoutFunc();
+                authState.authLogout();
             })
             .catch(err => {
             });
-    };
-}
+    }),
+
+
+});
 

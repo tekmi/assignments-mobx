@@ -5,8 +5,9 @@ import axios from './../../../helpers/axios';
 import withErrorHandler from "../../../hoc/withErrorHandler";
 import classes from './../../../App.css';
 import {NavLink} from 'react-router-dom';
+import {inject, observer} from "mobx-react";
 
-class User extends Component {
+const User = observer(class User extends Component {
     constructor(props) {
         super(props);
 
@@ -23,43 +24,104 @@ class User extends Component {
     }
 
     componentDidMount () {
-        this.props.userStateContainer.userGet(
-            this.props.authStateContainer.state.token,
-            this.props.authStateContainer.state.user.id
-        );
+        // TODO: directly changing MobX state and also below calling local state, while it could be achieved via props update via Mobx action...
+        this.props.userState.loading = true;
+
+        this.props.themeState.changeTheme('my-theme');
+
+        let token = this.props.authState.token;
+        let userId = this.props.authState.user.id;
+
+        const config = {
+            "headers": {
+                'Accept': 'application/ld+json',
+                'Content-Type': 'application/ld+json',
+                'Authorization': `Bearer ${token}`
+            }
+        };
+
+        axios.get(`/users/${userId}`, config)
+            .then(response => {
+
+                let userDetails = {
+                    id: response.data.id,
+                    name: response.data.name,
+                    companyName: response.data.companyName,
+                    billingAddress: response.data.addresses[0].street,
+                    billingCity: response.data.addresses[0].city,
+                    billingPostalCode: response.data.addresses[0].postalCode,
+                    billingCountry: response.data.addresses[0].countryCode,
+                    billingAddressUri: response.data.addresses[0]['@id']
+                };
+
+                this.setState({
+                    name: {
+                        ...this.state.name,
+                        value: userDetails.name
+                    },
+                    companyName: {
+                        ...this.state.companyName,
+                        value: userDetails.companyName ? userDetails.companyName : ''
+                    },
+                    billingAddress: {
+                        ...this.state.billingAddress,
+                        value: userDetails.billingAddress
+                    },
+                    billingCity: {
+                        ...this.state.billingCity,
+                        value: userDetails.billingCity
+                    },
+                    billingPostalCode: {
+                        ...this.state.billingPostalCode,
+                        value: userDetails.billingPostalCode
+                    },
+                    billingCountry: {
+                        ...this.state.billingCountry,
+                        value: userDetails.billingCountry
+                    },
+                    billingAddressUri: userDetails.billingAddressUri
+                });
+            })
+            .then(() => {
+                this.props.userState.loading = false;
+            });
     }
 
-    componentWillReceiveProps(nextProps) {
-        if (nextProps.userStateContainer.state.user_details) {
-            this.setState({
-                name: {
-                    ...this.state.name,
-                    value: nextProps.userStateContainer.state.user_details.name
-                },
-                companyName: {
-                    ...this.state.companyName,
-                    value: nextProps.userStateContainer.state.user_details.companyName ? nextProps.userStateContainer.state.user_details.companyName : ''
-                },
-                billingAddress: {
-                    ...this.state.billingAddress,
-                    value: nextProps.userStateContainer.state.user_details.billingAddress
-                },
-                billingCity: {
-                    ...this.state.billingCity,
-                    value: nextProps.userStateContainer.state.user_details.billingCity
-                },
-                billingPostalCode: {
-                    ...this.state.billingPostalCode,
-                    value: nextProps.userStateContainer.state.user_details.billingPostalCode
-                },
-                billingCountry: {
-                    ...this.state.billingCountry,
-                    value: nextProps.userStateContainer.state.user_details.billingCountry
-                },
-                billingAddressUri: nextProps.userStateContainer.state.user_details.billingAddressUri
-            });
-        }
-    }
+    // This worked with Redux, React Context and Unstated. With Mobx, such combination were not possible...looks like Mobx
+    // is not fully honouring this lifecycle method. Or maybe some Mobx internal observable methods happen before or after this React lifecycle event...
+
+    // componentWillReceiveProps(nextProps) {
+    //     console.log('componentWillReceiveProps', nextProps.userState.myUserDetails);
+    //     if (nextProps.userState.myUserDetails) {
+    //         this.setState({
+    //             name: {
+    //                 ...this.state.name,
+    //                 value: nextProps.userState.user_details.name
+    //             },
+    //             companyName: {
+    //                 ...this.state.companyName,
+    //                 value: nextProps.userState.user_details.companyName ? nextProps.userState.user_details.companyName : ''
+    //             },
+    //             billingAddress: {
+    //                 ...this.state.billingAddress,
+    //                 value: nextProps.userState.myUserDetails.billingAddress
+    //             },
+    //             billingCity: {
+    //                 ...this.state.billingCity,
+    //                 value: nextProps.userState.user_details.billingCity
+    //             },
+    //             billingPostalCode: {
+    //                 ...this.state.billingPostalCode,
+    //                 value: nextProps.userState.user_details.billingPostalCode
+    //             },
+    //             billingCountry: {
+    //                 ...this.state.billingCountry,
+    //                 value: nextProps.userState.user_details.billingCountry
+    //             },
+    //             billingAddressUri: nextProps.userState.user_details.billingAddressUri
+    //         });
+    //     }
+    // }
 
     inputChangedHandler = (event) => {
         this.setState({
@@ -89,24 +151,26 @@ class User extends Component {
 
         userDetails['billingAddressUri'] = this.state.billingAddressUri;
 
-        this.props.userStateContainer.userUpdate(
-            this.props.authStateContainer.state.token,
-            this.props.authStateContainer.state.user.id,
+        this.props.userState.userUpdate(
+            this.props.authState.token,
+            this.props.authState.user.id,
             userDetails
         );
     };
 
     render() {
+        const {themeState} = this.props;
+
         let userDetails = <Spinner/>;
-        if (!this.props.userStateContainer.state.loading) {
+        if (!this.props.userState.loading) {
             userDetails = (
-                <div className="container text-left">
+                <div className={`container text-left ${themeState.theme}`}>
                     <form method="post" noValidate onSubmit={(event) => this.submitHandler(event)}>
                         <div className='form-group'>
                             <label htmlFor="email">Email address</label>
                             <input disabled={true} type="email" name="email" className="form-control" id="email"
                                    aria-describedby="emailHelp" placeholder="Please enter email"
-                                   value={this.props.authStateContainer.state.user.email}
+                                   value={this.props.authState.user.email}
                                    required="required"/>
                         </div>
                         <div className={this.state.name.touched ? 'form-group was-validated' : 'form-group'}>
@@ -214,11 +278,11 @@ class User extends Component {
         return (
             <div>
                 <Toolbar/>
-                <h3>Editing user: <i>{this.props.authStateContainer.state.user.email}</i></h3>
+                <h3 title={`Using ${themeState.getThemeName}`}>Editing user: <i>{this.props.authState.user.email}</i></h3>
                 {userDetails}
             </div>
         );
     }
-}
+});
 
-export default withErrorHandler(User, axios);
+export default withErrorHandler(inject("authState", "userState", "themeState")(User), axios);

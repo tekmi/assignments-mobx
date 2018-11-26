@@ -9,28 +9,31 @@ import Logout from "./containers/Auth/Logout/Logout";
 import User from "./containers/Admin/User/User";
 import UserDelete from "./containers/Admin/User/UserDelete";
 
+import { inject } from "mobx-react";
+
+
 class App extends Component {
     componentDidMount() {
-        this.props.authContext.setAuthRedirectPath(this.props.location.pathname || '/');
-        this.props.authContext.authCheckState();
+        this.props.authState.setAuthRedirectPath(this.props.location.pathname || '/');
+        this.props.authState.authCheckState();
     }
 
     render() {
         let routes = (
             <Switch>
-                <Route path="/login" render={props => <Login {...props} authStateContainer={this.props.authContext} />}/>
-                <Route path="/register" render={props => <Register {...props} authStateContainer={this.props.authContext} />}/>
+                <Route path="/login" render={props => <Login {...props} />}/>
+                <Route path="/register" render={props => <Register {...props} />}/>
                 <Redirect to="/login"/>
             </Switch>
         );
 
-        if (this.props.authContext.state.token !== null) {
+        if (this.props.authState.token !== null) {
             routes = (
                 <Switch>
-                    <Route path="/logout" render={props => <Logout {...props} authStateContainer={this.props.authContext} />}/>
-                    <Route path="/login" render={props => <Login {...props} authStateContainer={this.props.authContext} />}/>
+                    <Route path="/logout" render={props => <Logout {...props} />}/>
+                    <Route path="/login" render={props => <Login {...props} />}/>
                     <Route path="/user-delete" component={UserDelete} />
-                    <Route path="/user" render={props => <User {...props} authStateContainer={this.props.authContext} userStateContainer={this.props.userContext} />}/>
+                    <Route path="/user" render={props => <User {...props} />}/>
                     <Route path="/" exact component={Dashboard} />
                     <Redirect to="/" />
                 </Switch>
@@ -47,4 +50,4 @@ class App extends Component {
     }
 }
 
-export default withRouter(App);
+export default inject("authState")(withRouter(App));
